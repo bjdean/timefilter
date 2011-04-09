@@ -1,0 +1,29 @@
+timefilter
+==========
+
+This script reads stdin and filters it thought to stdout based on the time.
+This enables a very noisy output to be sampled in small chunks.
+
+An example of where this is useful - analysing the strace output of a long
+running process. Rather than storing the full strace output this script allows
+you to capture a few second long intervals at regular intervals.
+
+INSTALLATION
+
+For the time being there is no install - this is a single script.
+
+SUPPORT AND DOCUMENTATION
+
+Run: ./timefiler --manual
+
+You can also look for information at:
+
+  http://bjdean.id.au/wiki/timefilter
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2011 Bradley Dean
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
