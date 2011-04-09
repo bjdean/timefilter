@@ -1,0 +1,158 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+#
+# timefilter
+#
+# time-filter stdin to stdout
+#
+
+######################################################################
+# Modules
+#
+
+### Public modules
+use Getopt::Long;
+use Pod::Usage;
+use Carp;
+
+### Local modules 
+
+######################################################################
+# Configuration
+#
+
+### Command-line parameters
+my $man  = 0;
+my $help = 0;
+
+# Output is filtered such that $output_time length windows will
+# be let through every $time_between_output seconds
+my $time_between_output;
+my $output_time;
+
+# Prepent output lines with a timestamp (or not)
+my $prepend_timestamp = 0;
+
+# Parse options and print usage if there is a syntax error,
+# or if usage was explicitly requested.
+GetOptions( 'help|?'    => \$help,
+            'man'       => \$man,
+            'every=i'   => \$time_between_output,
+            'for=i'     => \$output_time,
+            'timestamp' => \$prepend_timestamp,
+          ) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+
+if ( ! defined $time_between_output ) {
+  pod2usage("Must specify time between output with: --every");
+}
+
+if ( ! defined $output_time ) {
+  pod2usage("Must specify output window time with: --for");
+}
+
+######################################################################
+# Main Program
+#
+
+my $last_time_point = time();
+my $pass_through = 1;
+
+while ( my $line = <> ) {
+  my $time_now = time();
+  if ( $pass_through ) {
+    # Pass stdin to stdout
+    if ( $prepend_timestamp ) {
+      printf "[%s] ", scalar(localtime($time_now));
+    }
+    print $line;
+
+    if ( $time_now - $last_time_point >= $output_time ) {
+      # Switch output off and set time point
+      $pass_through = 0;
+      $last_time_point = $time_now;
+    }
+  }
+  else {
+    if ( $time_now - $last_time_point >= $time_between_output ) {
+      # Switch output on and set time point
+      $pass_through = 1;
+      $last_time_point = $time_now;
+    }
+  }
+}
+
+######################################################################
+# Documentation
+#
+__END__
+
+=head1 NAME
+
+timefilter - time-filter stdin to stdout
+
+=head1 SYNOPSIS
+
+timefilter [options] [file ...]
+
+ Options:
+   -every nnn       time between output
+   -for nnn         output time winodow
+
+   -help            brief help message
+   -man             full documentation
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-every nnn>
+
+Specify the time between pass-through windows. This is the time that the filter
+does not pass stdin to stdout.
+
+=item B<-for nnn>
+
+Specify the length of time of the pass-through windows. This is the amount of
+time that stdin will be passed to stdout.
+
+=item B<-timestamp>
+
+Switch on timestamp prepending on stdout.
+
+=item B<-help>
+
+Print a brief help message and exits.
+
+=item B<-man>
+
+Prints the manual page and exits.
+
+=back
+
+=head1 DESCRIPTION
+
+time-filter stdin to stdout.
+
+This script reads stdin and filters it thought to stdout based on the time.
+This enables a very noisy output to be sampled in small chunks.
+
+An example of where this is useful - analysing the strace output of a long
+running process. Rather than storing the full strace output this script
+allows you to capture a few second long intervals at regular intervals.
+
+=head1 AUTHOR
+
+Bradley Dean (perl@bjdean.id.au)
+
+=head1 COPYRIGHT
+
+       Copyright (c) 2008, Bradley Dean. All Rights Reserved.
+    This program is free software. It may be used, redistributed
+        and/or modified under the same terms as Perl itself.
+
+=cut
